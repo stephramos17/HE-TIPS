@@ -792,3 +792,9 @@ ggsave(paste0(fig_pre,  "median_byHEgrade_hep_29_406.pdf"), width = 5, height = 
 # Scores for each pair by grading
 subset(grad, group %in% c("hep") & clusters %in% "29_406") 
 subset(grad, group %in% c("hep") & clusters %in% "527_733") 
+
+# ---------------------------------------------#
+#           Response to reviewers
+# ---------------------------------------------#
+
+source("~/Dropbox/ucsd/projects/he/analysis/HE-TIPS/code/rtr_figures.R")
