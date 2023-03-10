@@ -1,4 +1,7 @@
-# Main code for analysis of Figures 3-5
+# main_Fig3-5.R
+# Author: Carolina Dantas
+# Date: Mar 9 2023
+# Purpose: code to perform analysis and generate Figures 3-5
 
 # Libraries
 library(tidyverse)
@@ -10,8 +13,8 @@ library(rstatix)
 # Set directories and analysis paths
 setwd("~/Dropbox/ucsd/projects/he/analysis/")
 fbmnDir <- "./ms_data/chemdir_v28_suspect_20220429/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/"
-analysis_name <-"20221102_"
-source("./code/functions_lcms.R")
+analysis_name <-"20230309_"
+source("~/Dropbox/ucsd/projects/he/analysis/HE-TIPS/code/function_lcms.R")
 
 # Set dir and paths
 inDir <- "./ms_data/chemdir_v28_suspect_20220429/" 
