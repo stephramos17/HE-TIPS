@@ -137,3 +137,41 @@ subset(lqtab, row.ID  %in% bas & Sample == "Post-PIV" & Worst_PostTIPS_HE_mod %i
   stat_compare_means(method = "wilcox.test")
 ggsave(paste0(fig_pre, "posthv_ba_0_vs_2_rtr.pdf"), width = 15, height = 6, units = "cm", dpi = 300)
 
+
+# ------------------------------------------------------------ #
+#                   Pressure
+# ------------------------------------------------------------ #
+
+
+calculate_portal_gradient <- function(ptFile, pgFile) {
+
+
+  ptdat <- readxl::read_excel(ptFile, na = c("", " ", "NA"))
+  pgdat <- read.csv(pgFile)
+  dat <- merge(ptdat, pgdat, by="pt_id")
+  
+  grad <- dat %>%
+    subset(select=c("Worst_PostTIPS_HE_mod",  "Pre.PV.gradient", "Post.PV.gradient")) %>%
+    drop_na() %>%
+    mutate(`pressure_change` = Pre.PV.gradient - Post.PV.gradient )
+    
+  p <- ggplot(grad, aes(x=Worst_PostTIPS_HE_mod, y=pressure_change, fill=Worst_PostTIPS_HE_mod)) +
+    theme_bw()+
+    geom_boxplot(outlier.shape = NA, alpha=0.4) +
+    # geom_point(position=position_jitterdodge(), alpha=0.7)+
+    geom_dotplot(binaxis='y', stackdir='center', alpha=0.7,
+                 position=position_dodge(1)) +
+    xlab("HE grading") +
+    ylab("mmHg change [mmHgpre - mmHgpost]")+
+    theme(legend.position="bottom") +
+    scale_fill_manual(values=he_colors)+
+    stat_compare_means(method = "kruskal", label = "p.format",
+                       label.x.npc = 0.3, label.y.npc = 0.9)
+  ggsave(paste0(fig_pre, "gradient_change.pdf"), width=4, height=7)
+  ggsave(paste0(fig_pre, "gradient_change.png"), width=4, height=7)
+
+  
+}
+
+calculate_portal_gradient(ptFile="~/Dropbox/ucsd/projects/he/data/processed/patient_overview_updated_20220613.xlsx",
+                          pgFile="~/Dropbox/ucsd/projects/he/data/processed/TIPS_pressure_data_20230310.csv")
