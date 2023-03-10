@@ -84,19 +84,7 @@ make_dens_plot <- function(dat){
   return(dens_dpeak)
 }
 
-run_ks_for_groups <- function(dat) {
-  
-  c01 <- ks.test(subset(dat,  Worst_PostTIPS_HE_mod == "0", select=log10_dpeak)[[1]],
-                 subset(dat,  Worst_PostTIPS_HE_mod == "1", select=log10_dpeak)[[1]])
-  c02 <- ks.test(subset(dat,  Worst_PostTIPS_HE_mod == "0", select=log10_dpeak)[[1]],
-                 subset(dat,  Worst_PostTIPS_HE_mod == "2+", select=log10_dpeak)[[1]])
-  c12 <- ks.test(subset(dat,  Worst_PostTIPS_HE_mod == "1", select=log10_dpeak)[[1]],
-                 subset(dat,  Worst_PostTIPS_HE_mod == "2+", select=log10_dpeak)[[1]])
-  
-  res <- list(`0 vs 1`=c01, `0 vs 2`= c02,`1 vs 2`= c12)
-  return(res)
-  
-}
+
 
 make_violinplot_byGrade <- function(dat) {
   
@@ -168,6 +156,19 @@ get_significance_clusters <- function(dat) {
   return(clusters)
 }
 
+run_ks_for_groups <- function(dat) {
+  
+  c01 <- ks.test(subset(dat,  Worst_PostTIPS_HE_mod == "0", select=log10_dpeak)[[1]],
+                 subset(dat,  Worst_PostTIPS_HE_mod == "1", select=log10_dpeak)[[1]])
+  c02 <- ks.test(subset(dat,  Worst_PostTIPS_HE_mod == "0", select=log10_dpeak)[[1]],
+                 subset(dat,  Worst_PostTIPS_HE_mod == "2+", select=log10_dpeak)[[1]])
+  c12 <- ks.test(subset(dat,  Worst_PostTIPS_HE_mod == "1", select=log10_dpeak)[[1]],
+                 subset(dat,  Worst_PostTIPS_HE_mod == "2+", select=log10_dpeak)[[1]])
+  
+  res <- list(`0 vs 1`=c01, `0 vs 2`= c02,`1 vs 2`= c12)
+  return(res)
+  
+}
 
 # Pre-process data for change from baseline analysis --------------
 
@@ -723,7 +724,7 @@ ggsave(paste0(fig_pre,  "main_chemprop_barplot_HEgrade_hep.pdf"), width = 3.5, h
 ggsave(paste0(fig_pre,  "main_chemprop_barplot_HEgrade_hep.png"), width = 3.5, height = 4)
 
 # Find out what main clusters are
-#subset(mdb, componentindex %in% 19, select=c(componentindex, subclass, `X.Scan.`,  Compound_Name))
+# subset(mdb, componentindex %in% 19, select=c(componentindex, subclass, `X.Scan.`,  Compound_Name))
 
 prepost_for_pair <- function(dat, usemedian = T){
   
