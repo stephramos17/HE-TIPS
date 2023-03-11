@@ -269,6 +269,60 @@ pi * vec[1] * vec[2]
 #A=1.191518
 
 # 2.B. change in portal pressure over TIPS study --------------
+
+
+calculate_portal_gradient <- function(ptFile, pgFile) {
+  
+  # The goal of this function is to plot gradient change (Fig 2b).
+  
+  # We do so by using the direct portal vein pressure in mmHg 
+  # before and after TIPS.
+  
+  # Parameters:
+  # ----------
+  # ptFile: patient metadata file path
+  # pgFile: patient gradient pressure 
+  
+  # Returns
+  # -------
+  
+  
+  # Read input files and merde by id
+  ptdat <- readxl::read_excel(ptFile, na = c("", " ", "NA"))
+  pgdat <- read.csv(pgFile)
+  dat <- merge(ptdat, pgdat, by="pt_id")
+  
+  # Calculate gradient
+  grad <- dat %>%
+    subset(select=c("Worst_PostTIPS_HE_mod",  "Pre.PV.gradient", "Post.PV.gradient")) %>%
+    drop_na() %>%
+    mutate(`pressure_change` = Pre.PV.gradient - Post.PV.gradient )
+  
+  # Set colors for plot
+  he_colors <- c("#39B54A", "#283891" , "#EF3E36")
+  
+  # Plot data
+  p <- ggplot(grad, aes(x=Worst_PostTIPS_HE_mod, y=pressure_change, fill=Worst_PostTIPS_HE_mod)) +
+    theme_bw()+
+    geom_boxplot(outlier.shape = NA, alpha=0.4) +
+    geom_dotplot(binaxis='y', stackdir='center', alpha=0.7,
+                 position=position_dodge(1)) +
+    xlab("HE grading") +
+    ylab("mmHg change [mmHgpre - mmHgpost]")+
+    theme(legend.position="bottom") +
+    scale_fill_manual(values=he_colors)+
+    stat_compare_means(method = "kruskal", label = "p.format",
+                       label.x.npc = 0.3, label.y.npc = 0.9)
+  ggsave("gradient_change.pdf", width=4, height=7)
+  ggsave("gradient_change.png", width=4, height=7)
+  
+  
+}
+
+calculate_portal_gradient(ptFile="~/Dropbox/ucsd/projects/he/data/processed/patient_overview_updated_20220613.xlsx",
+                          pgFile="~/Dropbox/ucsd/projects/he/data/processed/TIPS_pressure_data_20230310.csv")
+
+
 # 2.C. within individual changes of metabolite dissimilarity in peripheral vein--------------
 mdP<-fread("metadata_table/metadata_table-peripheral-prepost.txt") %>%
   dplyr::select(sampleid,ATTRIBUTE_pt_id, ATTRIBUTE_blood_procedure,
