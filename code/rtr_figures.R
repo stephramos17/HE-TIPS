@@ -144,8 +144,9 @@ ggsave(paste0(fig_pre, "posthv_ba_0_vs_2_rtr.pdf"), width = 15, height = 6, unit
 
 
 calculate_portal_gradient <- function(ptFile, pgFile) {
-
-
+  
+  library(tidyverse)
+  
   ptdat <- readxl::read_excel(ptFile, na = c("", " ", "NA"))
   pgdat <- read.csv(pgFile)
   dat <- merge(ptdat, pgdat, by="pt_id")
@@ -154,7 +155,7 @@ calculate_portal_gradient <- function(ptFile, pgFile) {
     subset(select=c("Worst_PostTIPS_HE_mod",  "Pre.PV.gradient", "Post.PV.gradient")) %>%
     drop_na() %>%
     mutate(`pressure_change` = Pre.PV.gradient - Post.PV.gradient )
-    
+  
   p <- ggplot(grad, aes(x=Worst_PostTIPS_HE_mod, y=pressure_change, fill=Worst_PostTIPS_HE_mod)) +
     theme_bw()+
     geom_boxplot(outlier.shape = NA, alpha=0.4) +
@@ -169,7 +170,7 @@ calculate_portal_gradient <- function(ptFile, pgFile) {
                        label.x.npc = 0.3, label.y.npc = 0.9)
   ggsave(paste0(fig_pre, "gradient_change.pdf"), width=4, height=7)
   ggsave(paste0(fig_pre, "gradient_change.png"), width=4, height=7)
-
+  
   
 }
 
