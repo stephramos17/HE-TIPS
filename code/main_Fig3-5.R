@@ -16,8 +16,8 @@ analysis_name <-"20230309_"
 source("./code/function_lcms.R")
 
 # Set dir and paths
-inDir <- "./ms_data/chemdir_v28_suspect_20220429/" 
-file_mdat <- "./ms_data/chemdir_v28_suspect_20220429/filtered_results_20220430.csv"
+inDir <- "./data/chemdir_v28_suspect_20220429/" 
+file_mdat <- "./data/chemdir_v28_suspect_20220429/filtered_results_20220430.csv"
 chemdir_files <- list.files(inDir, pattern="CHEMDIR.*tsv", recursive=TRUE, full.names = T)
 fig_pre <- paste0("./figures/", analysis_name)
 res_pre <- paste0("./results/", analysis_name)
@@ -40,6 +40,7 @@ mdb <- add_cluster_subclass_db() # get db with component index and subclass
 # Pre-process data
 lqtab <- get_long_qtab_w_mdat()
 lqtab <- add_log10_lqtab(dat=lqtab)
+lqtab
 
 # Get paired hepatic data heppair_lqtab
 heppair_lqtab <- subset(lqtab, Sample %in%  c("Pre-HV", "Post-HV")) %>%
@@ -172,16 +173,23 @@ run_ks_for_groups <- function(dat) {
 # Pre-process data for change from baseline analysis --------------
 
 # Get change from baseline for peripheral data
-per_change <- get_change_from_baseline(dat=perpair_lqtab)
+per_change <- get_change_from_baseline(dat=perpair_lqtab) %>%
+  subset(., select = c("row.ID", "componentindex", "log10_dpeak", "Worst_PostTIPS_HE_mod", "blood_origin"))
+
 
 # Get change form baseline for hepatic data
-hep_change <- get_change_from_baseline(dat=heppair_lqtab)
+hep_change <- get_change_from_baseline(dat=heppair_lqtab) %>%
+  subset(., select = c("row.ID", "componentindex", "log10_dpeak", "Worst_PostTIPS_HE_mod", "blood_origin"))
 
 # Combined
 all_change <- rbind(per_change, hep_change)
 
 
-# Plot Change from baseeline results
+write.csv(all_change, file = paste0(res_pre, "fig3-table.csv"), quote=F, row.names = F)
+
+# Save tables
+
+# Plot Change from baseline results
 
 # 3.B. Density plot for change from baseline ------------
 
