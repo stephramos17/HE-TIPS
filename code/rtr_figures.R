@@ -138,6 +138,22 @@ subset(lqtab, row.ID  %in% bas & Sample == "Post-PIV" & Worst_PostTIPS_HE_mod %i
 ggsave(paste0(fig_pre, "posthv_ba_0_vs_2_rtr.pdf"), width = 15, height = 6, units = "cm", dpi = 300)
 
 
+
+# -------------------------------------------------------------#
+#                   Specific Bile Acids 0/1 vs 2+
+
+
+
+plot_bileacids_violin
+subset(lqtab, row.ID  %in% bas & Sample == "Post-PIV" ) %>%
+  mutate(Worst_PostTIPS_HE_mod=case_when(Worst_PostTIPS_HE_mod == "0" ~ "0/1",
+                                         Worst_PostTIPS_HE_mod == "1" ~ "0/1",
+                                         Worst_PostTIPS_HE_mod == "2+" ~ "2+")) %>% 
+  plot_bileacids_violin() +
+  facet_wrap(~row.ID) +
+  stat_compare_means(method = "wilcox.test")
+ggsave("./RTR_bileacids_01_2.pdf", width = 15, height = 6, units = "cm", dpi = 300)
+
 # ------------------------------------------------------------ #
 #                   Pressure
 # ------------------------------------------------------------ #
