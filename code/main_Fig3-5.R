@@ -11,7 +11,7 @@ library(ggpubr)
 library(rstatix)
 
 # Set directories and analysis paths
-setwd("~/Dropbox/ucsd/projects/he/analysis/")
+setwd("~/Dropbox/ucsd/projects/he/analysis/HE-TIPS/")
 fbmnDir <- "./ms_data/chemdir_v28_suspect_20220429/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/"
 analysis_name <-"20230309_"
 source("~/Dropbox/ucsd/projects/he/analysis/HE-TIPS/code/function_lcms.R")
