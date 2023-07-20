@@ -2,9 +2,16 @@
 
 load_quant_tab_lcms <- function(inPath = fbmnDir) {
   
+  # Input
+  #       - inPath is path to FBMN directory with all data from GNPS
+  #       - example: inPath = "./data/chemdir_v28_suspect_20220429/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/"
+  # Output
+  #       - qtab is the quantification table from FBMN
+  
+  
   fbmn_files <- list.files(inPath, pattern="*tsv$" , recursive=T, full.names = T)
   
-  # Read quntification table  
+  # Read quantification table  
   qtab <- read.csv(list.files(file.path(
     inPath, "quantification_table_reformatted"), full.names = T))  
   return(qtab)
@@ -12,6 +19,12 @@ load_quant_tab_lcms <- function(inPath = fbmnDir) {
 }
 
 load_db_tab_lcms <- function(inPath = fbmnDir) {
+  
+  # Input
+  #       - inPath is path to FBMN directory with all data from GNPS
+  #       - example: inPath = "./data/chemdir_v28_suspect_20220429/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/"
+  # Output
+  #       - db is results from FBMN with cluster and network matches
   
   fbmn_files <- list.files(inPath, pattern="*tsv$" , recursive=T, full.names = T)
   
@@ -23,6 +36,12 @@ load_db_tab_lcms <- function(inPath = fbmnDir) {
 }
 
 load_metadata_lcms <- function(inPath = fbmnDir) {
+  
+  # Input
+  #       - inPath is path to FBMN directory with all data from GNPS
+  #       - example: inPath = "./data/chemdir_v28_suspect_20220429/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/"
+  # Output
+  #       - mdat is metadata available from FBMN related to each sample
   
   # read metadata
   mdatFile <- file.path(inPath, "metadata_table", "metadata_table-00000.tsv" )
@@ -42,11 +61,16 @@ load_metadata_lcms <- function(inPath = fbmnDir) {
 get_long_qtab_w_mdat <- function(xqtab=qtab, 
                                  lookup=cdat[c("cluster.index", "componentindex")]) {
   
+  # Input
+  #       - xqtab is quantificaiton table from FBMN, which can be loaded with load_quant_tab_lcms
+  #       - lookup is cluster data information from FBMN
+  # Output
+  #       - mdat is metadata available from FBMN related to each sample
+  
   xqtab <- merge(xqtab, lookup, by.x="row.ID", by.y="cluster.index")
   lqtab <- pivot_longer(xqtab, cols=grep("Peak", colnames(xqtab), value = T),
                         names_to="peak_sample", values_to="peak_area")
   
-  # lqtab$log10 <- log10(lqtab$peak_area)
   mdat$peak_sample <- gsub(" ", ".", mdat$sampleID)
   lqtab <- merge(lqtab, mdat, by="peak_sample", all.x=TRUE )
   lqtab <- lqtab[with(lqtab, order(blood_origin , blood_procedure, -row.ID, pt_id)), ]
@@ -57,12 +81,15 @@ get_long_qtab_w_mdat <- function(xqtab=qtab,
 
 add_log10_lqtab <- function(dat) {
   
-  min_peak <- min(subset(dat, peak_area > 0)[,"peak_area"])
- # dat_w_log <- mutate(dat, log_var = log10(peak_area + 1))
-#  dat_w_log <- mutate(dat_w_log, log10 = log10(peak_area + min_peak*0.5))
+  # Input
+  #     - dat is quantificaiton table from FBMN
+  # Output
+  #     - dat_w_log - data with log10(peak_area)
   
+  min_peak <- min(subset(dat, peak_area > 0)[,"peak_area"])
+
   dat %>%
-    mutate(log_var = log10(peak_area + 1)) %>%
+   # mutate(log_var = log10(peak_area + 1)) %>%
     mutate(peak_mod = peak_area + (min_peak*0.5) ) %>%
     mutate(log10 = log10(peak_mod)) ->   dat_w_log 
   
@@ -71,6 +98,13 @@ add_log10_lqtab <- function(dat) {
 
 
 load_clusterinfo_tab_lcms <- function(inPath=fbmnDir) {
+  
+  # Input
+  #       - inPath is path to FBMN directory with all data from GNPS
+  #       - example: inPath = "./data/chemdir_v28_suspect_20220429/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/"
+  # Output
+  #       - dat is cluster information available from FBMN for features
+  
   
   # read file with peak area intensity by file/group for each cluster
   fbmn_files <- list.files(inPath, pattern="*tsv$" , recursive=T, full.names = T)
