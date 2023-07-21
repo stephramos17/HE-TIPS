@@ -1,0 +1,10 @@
+componentindex,.y.,group1,group2,p,p.adj,p.format,p.signif,method,p.adj.signif
+5,log10_dpeak,0,2+,0.335074056118965,0.72,0.33507,ns,Wilcoxon,ns
+5,log10_dpeak,0,1,0.000518741618522772,0.0036,0.00052,***,Wilcoxon,**
+5,log10_dpeak,2+,1,0.000520478741334313,0.0036,0.00052,***,Wilcoxon,**
+19,log10_dpeak,0,2+,0.0302294764634422,0.12,0.03023,*,Wilcoxon,ns
+19,log10_dpeak,0,1,0.240890066864387,0.72,0.24089,ns,Wilcoxon,ns
+19,log10_dpeak,2+,1,7.75868224881968e-06,7e-05,7.8e-06,****,Wilcoxon,****
+8,log10_dpeak,0,2+,0.000927456832243959,0.0046,0.00093,***,Wilcoxon,**
+8,log10_dpeak,0,1,0.443006821811008,0.72,0.44301,ns,Wilcoxon,ns
+8,log10_dpeak,2+,1,4.40964211119418e-05,0.00035,4.4e-05,****,Wilcoxon,***
