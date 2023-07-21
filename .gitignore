@@ -3,5 +3,5 @@
 .RData
 .Ruserdata
 .Rproj
-./figures
-./results
+figures/
+results/
