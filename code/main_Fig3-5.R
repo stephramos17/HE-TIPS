@@ -361,7 +361,7 @@ ggsave(paste0(fig_pre, "dviolin_clusters_deltapeak_main.pdf"), width = 7, height
 rename_sample_abbreviations <- function(df=lqtab) {
   
   # Rename original sample names from readmission
-  # tto reconcile similar timepoint between individuals
+  # to reconcile similar timepoint between individuals
   
   df$Sample <- recode(df$Sample, `Pre-P` = "Pre-PIV",
                       `Post-P` = "Post-PIV",
@@ -404,7 +404,7 @@ lqtab <- rename_sample_abbreviations()
 
 # Select all bile acids by cluster index
 allbas <- subset(cdat, componentindex == 8, select=cluster.index)[[1]]
-
+allbas
 
 # Find significant BAs ----------------------
 
@@ -437,6 +437,10 @@ subset(lqtab, row.ID  %in% allbas & Sample == "Post-PIV" ) %>%
 
 
 # Plot specific BA levels ------------------
+subset(lqtab, row.ID  %in% bas ) %>%
+  subset(select=c("row.ID", "Sample", "pt_id", "log10", "Worst_PostTIPS_HE_mod")) %>%
+  drop_na(Sample) %>%
+  write.csv(., file = paste0(res_pre, "fig4-table.csv"), quote=F, row.names = F)
 
 
 # Figure 4a - sig by HE grade post-PIV
@@ -677,6 +681,9 @@ df <- merge(df, jobs[,c("group", "timeseries", "HE_status", "file_id", "conditio
                         "grading_value", "grading_timepoint")], 
             by="file_id") 
 
+# Save combined results table
+df %>%
+  write.csv(., file = paste0(res_pre, "fig5-table.csv"), quote=F, row.names = F)
 
 # Pre vs post - hepatic and peripheral -------------------
 
