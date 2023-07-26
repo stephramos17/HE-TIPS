@@ -10,96 +10,113 @@ library("phyloseq")
 library("vegan")
 
 # Set directory
-setwd("~/Dropbox/ucsd/projects/he/analysis/")
+setwd("~/Notebooks/sfloresr/HE/HE-TIPS")
 
 # subset counts table and metadata -------------------
 
 # subsetting hepatic vein data
-mdH<-fread("metadata_table/metadata_table-00000.tsv")%>%rename(sample_name=filename)%>%
+mdH<-fread("data/gnps_output/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/metadata_table/metadata_table-00000.tsv")%>%rename(sample_name=filename)%>%
   filter(ATTRIBUTE_blood_origin=="hepatic")%>%rename(sampleid=ATTRIBUTE_sampleID)%>%
   select(sampleid,everything())%>%select(-sample_name)
 mdH$ATTRIBUTE_blood_procedure<-factor(mdH$ATTRIBUTE_blood_procedure,c("pre","post","bd","return"))
 
-write.table(mdH,"metadata_table/metadata_table-hepatic.txt",sep = "\t",row.names = FALSE,quote=FALSE)
+write.table(mdH,"data/processed/metadata_table-hepatic.txt",sep = "\t",row.names = FALSE,quote=FALSE)
 
-HEdf_hepatic<-fread("quantification_table/quantification_table-00000.csv")%>%
+HEdf_hepatic<-fread("data/gnps_output/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/quantification_table/quantification_table-00000.csv")%>%
   select(`row ID`, all_of(mdH$sampleid))
-write.table(HEdf_hepatic,"quantification_table/quantification_table-hepatic.txt",sep = "\t",row.names = FALSE,quote=FALSE)
+write.table(HEdf_hepatic,"data/processed/quantification_table-hepatic.txt",sep = "\t",row.names = FALSE,quote=FALSE)
 
 # subsetting peripheral vein data
 
-mdP<-fread("metadata_table/metadata_table-00000.tsv")%>%dplyr::rename(sample_name=filename)%>%
+mdP<-fread("data/gnps_output/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/metadata_table/metadata_table-00000.tsv")%>%dplyr::rename(sample_name=filename)%>%
   filter(ATTRIBUTE_blood_origin=="peripheral",ATTRIBUTE_blood_procedure!="het")%>%
   dplyr::rename(sampleid=ATTRIBUTE_sampleID)%>%
   select(sampleid,everything())%>%select(-sample_name)
 mdP$ATTRIBUTE_blood_procedure<-factor(mdP$ATTRIBUTE_blood_procedure,c("pre","post","bd","return"))
 
-write.table(mdP,"metadata_table/metadata_table-peripheral.txt",sep = "\t",row.names = FALSE,quote=FALSE)
+write.table(mdP,"data/processed//metadata_table-peripheral.txt",sep = "\t",row.names = FALSE,quote=FALSE)
 
-HEdf_Perif<-fread("quantification_table/quantification_table-00000.csv")%>%
+HEdf_Perif<-fread("data/gnps_output/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/quantification_table/quantification_table-00000.csv")%>%
   select(`row ID`, all_of(mdP$sampleid))
-write.table(HEdf_Perif,"quantification_table/quantification_table-peripheral.txt",sep = "\t",row.names = FALSE,quote=FALSE)
+write.table(HEdf_Perif,"data/processed/quantification_table-peripheral.txt",sep = "\t",row.names = FALSE,quote=FALSE)
 
 #subsetting post hepatic vein data
 
-mdPoh<-fread("metadata_table/metadata_table-00000.tsv")%>%dplyr::rename(sample_name=filename)%>%
+mdPoh<-fread("data/gnps_output/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/metadata_table/metadata_table-00000.tsv")%>%dplyr::rename(sample_name=filename)%>%
   filter(ATTRIBUTE_blood_procedure=="post" & ATTRIBUTE_blood_origin=="hepatic")%>%
   dplyr::rename(sampleid=ATTRIBUTE_sampleID)%>%select(sampleid,everything())%>%select(-sample_name)%>%
   mutate(WPostTIPS_HE=ifelse(ATTRIBUTE_Worst_PostTIPS_HE==3|ATTRIBUTE_Worst_PostTIPS_HE==2,"2+",ATTRIBUTE_Worst_PostTIPS_HE))
 mdPoh$ATTRIBUTE_blood_procedure<-factor(mdPoh$ATTRIBUTE_blood_procedure,c("pre","post","bd","return"))
 mdPoh$ATTRIBUTE_blood_origin<-factor(mdPoh$ATTRIBUTE_blood_origin,c("peripheral","hepatic"))
 
-write.table(mdPoh,"metadata_table/metadata_table-post-hepatic.txt",sep = "\t",row.names = FALSE,quote=FALSE)
+write.table(mdPoh,"data/processed/metadata_table-post-hepatic.txt",sep = "\t",row.names = FALSE,quote=FALSE)
 
-HEdf_PostH<-fread("quantification_table/quantification_table-00000.csv")%>%
+HEdf_PostH<-fread("data/gnps_output/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/quantification_table/quantification_table-00000.csv")%>%
   select(`row ID`, all_of(mdPoh$sampleid))
-write.table(HEdf_PostH,"quantification_table-post-hepatic.txt",sep = "\t",row.names = FALSE,quote=FALSE)
+write.table(HEdf_PostH,"data/processed/quantification_table-post-hepatic.txt",sep = "\t",row.names = FALSE,quote=FALSE)
 
 # subsetting peripheral vein data --just pre vs. post
 
-mdPP<-fread("metadata_table/metadata_table-00000.tsv")%>%dplyr::rename(sample_name=filename)%>%
+mdPP<-fread("data/gnps_output/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/metadata_table/metadata_table-00000.tsv")%>%dplyr::rename(sample_name=filename)%>%
   filter(ATTRIBUTE_blood_origin=="peripheral",ATTRIBUTE_blood_procedure!="het")%>%
   dplyr::rename(sampleid=ATTRIBUTE_sampleID)%>%
   select(sampleid,everything())%>%select(-sample_name)
 mdPP$ATTRIBUTE_blood_procedure<-factor(mdPP$ATTRIBUTE_blood_procedure,c("pre","post","bd","return"))
 
-write.table(mdPP,"metadata_table/metadata_table-peripheral-prepost.txt",sep = "\t",row.names = FALSE,quote=FALSE)
+write.table(mdPP,"data/processed/metadata_table-peripheral-prepost.txt",sep = "\t",row.names = FALSE,quote=FALSE)
 
-HEdf_PerifPP<-fread("quantification_table/quantification_table-00000.csv")%>%
+HEdf_PerifPP<-fread("data/gnps_output/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/quantification_table/quantification_table-00000.csv")%>%
   select(`row ID`, all_of(mdPP$sampleid))
-write.table(HEdf_PerifPP,"quantification_table/quantification_table-peripheral-prepost.txt",sep = "\t",row.names = FALSE,quote=FALSE)
+write.table(HEdf_PerifPP,"data/quantification_table/quantification_table-peripheral-prepost.txt",sep = "\t",row.names = FALSE,quote=FALSE)
+
+#cleaning mtb file -------------------
+mtbid_dict<-fread("data/gnps_output/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/DB_result/32405003deff48dfb9e7cb571ecefc23.tsv")%>%
+  rename(rowID=`#Scan#`)
+
+md<-fread("data/gnps_output/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/metadata_table/metadata_table-00000.tsv")%>%rename(sample_name=filename)
+md$ATTRIBUTE_blood_procedure[md$ATTRIBUTE_Sample=="Pre-HET"]<-"pre"
+md$ATTRIBUTE_blood_procedure[grepl("Post-",md$ATTRIBUTE_Sample)]<-"post"
+md$ATTRIBUTE_blood_procedure[grepl("POD-1",md$ATTRIBUTE_Sample)]<-"post"
+md$ATTRIBUTE_blood_procedure<-factor(md$ATTRIBUTE_blood_procedure,c("pre","post","bd","return"))
+
+mtb_all<-fread("data/gnps_output/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/quantification_table/quantification_table-00000.csv")%>%
+  gather(ATTRIBUTE_sampleID,counts, -`row ID`,-`row m/z`,-`row retention time`)%>% rename(rowID=`row ID`)%>%
+  mutate(log_counts=log10(counts+1))%>% left_join(.,md, by="ATTRIBUTE_sampleID")%>%
+  left_join(.,mtbid_dict,by="rowID")
+
+write.table(mtb_all,"data/processed/HEmtbdata_allwmd.txt",sep = "\t",row.names = FALSE,quote=FALSE)
 
 # paired wilcoxon analysis -------------------
 ##peripheral vein
-mtb_all<-fread("diff_HE_analysis/SFR21_1025_HEmtbdata_allwmd.txt")
+mtb_all<-fread("data/processed/HEmtbdata_allwmd.txt")
 
 perifPrPo<-run_paired_wilcox(mtb_all,"pre_vs_post","peripheral")
 perifPrbd<-run_paired_wilcox(mtb_all,"pre_vs_bd","peripheral")
 perifPobd<-run_paired_wilcox(mtb_all,"post_vs_bd","peripheral")
 
 perif_pvals<-rbind(perifPrPo,perifPrbd,perifPobd)
-write.table(perif_pvals,"diff_HE_analysis/SFR21_1025_Perif_HEVisitvslogMtbAbun_PAIREDwilcoxFDR_allpvals.txt",sep = "\t",
+write.table(perif_pvals,"data/results/Perif_HEVisitvslogMtbAbun_PAIREDwilcoxFDR_allpvals.txt",sep = "\t",
             row.names = FALSE,quote=FALSE)
 perif_sigpvals<-perif_pvals%>%filter(padj<0.1)
-write.table(perif_sigpvals,"diff_HE_analysis/SFR21_1025_Perif_HEVisitvslogMtbAbun_PAIREDwilcoxFDR0.1_sigpvals.txt",sep = "\t",
+write.table(perif_sigpvals,"data/results/Perif_HEVisitvslogMtbAbun_PAIREDwilcoxFDR0.1_sigpvals.txt",sep = "\t",
             row.names = FALSE,quote=FALSE)
 
 ##hepatic vein
 hepPrPo<-run_paired_wilcox(mtb_all,"pre_vs_post","hepatic")
-write.table(hepPrPo,"diff_HE_analysis/SFR21_1025_hepatic_HEVisitvslogMtbAbun_PAIREDwilcoxFDR_allpvals.txt",sep = "\t",
+write.table(hepPrPo,"data/results/hepatic_HEVisitvslogMtbAbun_PAIREDwilcoxFDR_allpvals.txt",sep = "\t",
             row.names = FALSE,quote=FALSE)
 hepPrPo_sigpvals<-hepPrPo%>%filter(padj<0.1)
-write.table(hepPrPo_sigpvals,"diff_HE_analysis/SFR21_1025_hepatic_HEVisitvslogMtbAbun_PAIREDwilcoxFDR0.1_sigpvals.txt",sep = "\t",
+write.table(hepPrPo_sigpvals,"data/results/hepatic_HEVisitvslogMtbAbun_PAIREDwilcoxFDR0.1_sigpvals.txt",sep = "\t",
             row.names = FALSE,quote=FALSE)
 
 # summarise paired wilcoxon analysis -------------------
 ##heatmap for peripheral and hepatic (pre vs post)
-sigmtbsP<-fread("diff_HE_analysis/SFR21_1025_Perif_HEVisitvslogMtbAbun_PAIREDwilcoxFDR0.1_sigpvals.txt")%>%
+sigmtbsP<-fread("data/results/Perif_HEVisitvslogMtbAbun_PAIREDwilcoxFDR0.1_sigpvals.txt")%>%
   mutate(ATTRIBUTE_blood_origin="peripheral")%>%filter(comparison=="pre_vs_post")
-sigmtbsH<-fread("diff_HE_analysis/SFR21_1025_hepatic_HEVisitvslogMtbAbun_PAIREDwilcoxFDR0.1_sigpvals.txt")%>%
+sigmtbsH<-fread("data/results/hepatic_HEVisitvslogMtbAbun_PAIREDwilcoxFDR0.1_sigpvals.txt")%>%
   mutate(ATTRIBUTE_blood_origin="hepatic")
 sigmtbs<-rbind(sigmtbsP,sigmtbsH)%>%rename(rowID=mtb_id)
-write.table(sigmtbs,"diff_HE_analysis/SFR21_1025_ALLbldorg_HEVisitvslogMtbAbun_PAIREDsigwilcoxFDR0.1_prepost.txt",sep = "\t",
+write.table(sigmtbs,"data/results/ALLbldorg_HEVisitvslogMtbAbun_PAIREDsigwilcoxFDR0.1_prepost.txt",sep = "\t",
             row.names = FALSE,quote=FALSE)
 
 sigmtbs_annotA<-sigmtbs%>%rename(ATTRIBUTE_blood_procedure=comparison)%>%
@@ -108,7 +125,7 @@ sigmtbs_annotA<-sigmtbs%>%rename(ATTRIBUTE_blood_procedure=comparison)%>%
   filter(ATTRIBUTE_blood_procedure=="post"|ATTRIBUTE_blood_procedure=="bd")%>%
   mutate(stars=cut(padj, breaks=c(-Inf, 0.001, 0.01, 0.05, 0.1,Inf), label=c("***", "**", "*", ".","")))
 
-mtb_allA<-fread("diff_HE_analysis/SFR21_1025_HEmtbdata_allwmd.txt")%>%
+mtb_allA<-fread("data/processed/HEmtbdata_allwmd.txt")%>%
   filter(ATTRIBUTE_blood_origin=="peripheral"|ATTRIBUTE_blood_origin=="hepatic")%>%
   filter(ATTRIBUTE_blood_procedure=="pre"|ATTRIBUTE_blood_procedure=="post")
 
@@ -118,12 +135,12 @@ sigmtb_cleanA<-mtb_allA%>%filter(rowID %in% sigmtbs$rowID)%>% left_join(.,sigmtb
   mutate(ATTRIBUTE_blood_origin=factor(ATTRIBUTE_blood_origin, levels = c("peripheral", "hepatic")),
          ATTRIBUTE_blood_procedure=factor(ATTRIBUTE_blood_procedure, levels = c("pre", "post","bd")))
 
-write.table(sigmtb_cleanA,"diff_HE_analysis/SFR21_1025_prevpost_PerifHep_heatmapdata.txt",sep = "\t",
+write.table(sigmtb_cleanA,"data/results/prevpost_PerifHep_heatmapdata.txt",sep = "\t",
             row.names = FALSE,quote=FALSE)
 
 ##heatmap for peripheral (pre vs post vs bd)
 
-sigmtbsPh<-fread("diff_HE_analysis/SFR21_1025_Perif_HEVisitvslogMtbAbun_PAIREDwilcoxFDR0.1_sigpvals.txt")%>%
+sigmtbsPh<-fread("data/results/Perif_HEVisitvslogMtbAbun_PAIREDwilcoxFDR0.1_sigpvals.txt")%>%
   mutate(ATTRIBUTE_blood_origin="peripheral")%>%rename(rowID=mtb_id)
 
 sigmtbs_annotB<-sigmtbsPh%>%rename(ATTRIBUTE_blood_procedure=comparison)%>%
@@ -132,7 +149,7 @@ sigmtbs_annotB<-sigmtbsPh%>%rename(ATTRIBUTE_blood_procedure=comparison)%>%
   filter(ATTRIBUTE_blood_procedure=="post"|ATTRIBUTE_blood_procedure=="bd")%>%
   mutate(stars=cut(padj, breaks=c(-Inf, 0.001, 0.01, 0.05, 0.1, Inf), label=c("***", "**", "*", ".","")))
 
-mtb_allB<-fread("diff_HE_analysis/SFR21_1025_HEmtbdata_allwmd.txt")%>%
+mtb_allB<-fread("data/processed/HEmtbdata_allwmd.txt")%>%
   filter(ATTRIBUTE_blood_origin=="peripheral")%>%
   filter(ATTRIBUTE_blood_procedure=="pre"|ATTRIBUTE_blood_procedure=="post"|ATTRIBUTE_blood_procedure=="bd")
 
@@ -143,14 +160,14 @@ sigmtb_cleanB<-mtb_allB%>%filter(rowID %in% sigmtbsP$rowID)%>% left_join(.,sigmt
   mutate(ATTRIBUTE_blood_origin=factor(ATTRIBUTE_blood_origin, levels = c("peripheral", "hepatic")),
          ATTRIBUTE_blood_procedure=factor(ATTRIBUTE_blood_procedure, levels = c("pre", "post","bd")))
 
-write.table(sigmtb_cleanB,"diff_HE_analysis/SFR21_1025_prevpostvsbd_PerifOnly_heatmapdata.txt",sep = "\t",
+write.table(sigmtb_cleanB,"data/results/prevpostvsbd_PerifOnly_heatmapdata.txt",sep = "\t",
             row.names = FALSE,quote=FALSE)
 ####################################################################
 #                  Figure 1 - mtb changes over TIPS procedure          
 ####################################################################
 
 # 1.B. RPCA plot of hepatic vein samples--------------
-hep_ord <- read_qza("ordination-hepatic.qza") #check deicode.sh
+hep_ord <- read_qza("data/results/ordination-hepatic.qza") #check deicode.sh
 
 rpcaH<-hep_ord$data$Vectors %>%
   select(SampleID, PC1, PC2) %>%
@@ -166,10 +183,10 @@ pH<-rpcaH %>%
        y =paste("PC2 (",round(hep_ord$data$ProportionExplained$PC2*100,digits=2),"%)",sep=""),
        color="TIPS visit")+ggtitle("Hepatic")+ theme(plot.title = element_text(face = "bold"))
 
-ggsave("SFR22_0512_PCoAvisitHVOnlyAnnot_wellipse.pdf", plot=pH,height=3, width=3)
+ggsave("data/figures/PCoAvisitHVOnlyAnnot_wellipse.pdf", plot=pH,height=3, width=3)
 
 # 1.C. RPCA plot of peripheral vein samples--------------
-perif_ord <- read_qza("ordination-peripheral.qza") #check deicode.sh
+perif_ord <- read_qza("data/results/ordination-peripheral.qza") #check deicode.sh
 
 rpcaP<-perif_ord$data$Vectors %>%
   select(SampleID, PC1, PC2) %>%
@@ -185,10 +202,10 @@ pP<-rpcaP %>%
        y =paste("PC2 (",round(perif_ord$data$ProportionExplained$PC2*100,digits=2),"%)",sep=""),
        color="TIPS visit")+ggtitle("Peripheral")+ theme(plot.title = element_text(face = "bold"))
 
-ggsave("SFR22_0512_PCoAvisitPerifOnlyAnnot_wellipse.pdf", plot=pP,height=3, width=3.1)
+ggsave("data/figures/PCoAvisitPerifOnlyAnnot_wellipse.pdf", plot=pP,height=3, width=3.1)
 
 # 1.D. Natural log ratio of bile acids over the TIPS procedure in peripheral vein--------------
-df_div<-fread("ordination-peripheral/sample_plot_data_bab_flip.tsv")%>%select(1:3)%>%
+df_div<-fread("data/results/sample_plot_data_bab_flip.tsv")%>%select(1:3)%>%
   mutate(ATTRIBUTE_blood_procedure=factor(ATTRIBUTE_blood_procedure, levels = c("pre", "post","bd")))
 
 Natlog_p<-ggplot(df_div, aes(x=ATTRIBUTE_blood_procedure, y=Current_Natural_Log_Ratio,fill=ATTRIBUTE_blood_procedure)) +
@@ -199,7 +216,7 @@ Natlog_p<-ggplot(df_div, aes(x=ATTRIBUTE_blood_procedure, y=Current_Natural_Log_
   labs(x="TIPS visit",y="Natural Log Ratio")+
   theme(legend.position = "none")
 
-ggsave("ordination-peripheral/SFR22_0718_deicode_bab_natlog.pdf",Natlog_p, height=3, width=3.5)
+ggsave("data/figures/deicode_bab_natlog.pdf",Natlog_p, height=3, width=3.5)
 
 pairwise.wilcox.test(df_div$Current_Natural_Log_Ratio, df_div$ATTRIBUTE_blood_procedure,
                      p.adjust.method="fdr")
@@ -211,25 +228,25 @@ pairwise.wilcox.test(df_div$Current_Natural_Log_Ratio, df_div$ATTRIBUTE_blood_pr
 # 1.E. heatmap of significantly expressed mtb hits--------------
 
 # 1.F. example: differential expression of GUDCA pre vs. post TIPS (peripheral) --------------
-mtb_all<-fread("diff_HE_analysis/SFR21_1025_HEmtbdata_allwmd.txt")
-pval_dfF<-fread("diff_HE_analysis/SFR21_1025_Perif_HEVisitvslogMtbAbun_PAIREDwilcoxFDR0.1_sigpvals.txt")%>%
+mtb_all<-fread("data/processed/HEmtbdata_allwmd.txt")
+pval_dfF<-fread("data/results/Perif_HEVisitvslogMtbAbun_PAIREDwilcoxFDR0.1_sigpvals.txt")%>%
   filter(comparison=="pre_vs_post")
 pltF<-paired_plots(mtb_all,c(515),"pre_vs_post","peripheral",pval_dfF,1,c("#52A7DC","#DF643B"))
-ggsave("diff_HE_analysis/SFR21_1025_mtb382515_Perifprepost_Paired.pdf", plot=pltF)
+ggsave("data/figures/mtb382515_Perifprepost_Paired.pdf", plot=pltF)
 
 # 1.G. example: differential expression of bile acids post vs. bd TIPS (peripheral) --------------
-mtb_all<-fread("diff_HE_analysis/SFR21_1025_HEmtbdata_allwmd.txt")
-pval_dfG<-fread("diff_HE_analysis/SFR21_1025_Perif_HEVisitvslogMtbAbun_PAIREDwilcoxFDR0.1_sigpvals.txt")%>%
+mtb_all<-fread("data/processed/HEmtbdata_allwmd.txt")
+pval_dfG<-fread("data/results/Perif_HEVisitvslogMtbAbun_PAIREDwilcoxFDR0.1_sigpvals.txt")%>%
   filter(comparison=="post_vs_bd")
 pltG<-paired_plots(mtb_all,c(176,177,181),"post_vs_bd","peripheral",pval_dfG,3,c("#DF643B","#2D653D"))
-ggsave("diff_HE_analysis/SFR21_1025_BA_Perifpostbd_Paired_shortannot.pdf", plot=pltG)
+ggsave("diff_HE_analysis/BA_Perifpostbd_Paired_shortannot.pdf", plot=pltG)
 
 ####################################################################
 #                  Figure 2 - mtb changes associated with HE grade        
 ####################################################################
 
 # 2.A. RPCA of post hepatic vein samples showing HE grade--------------
-grd_ord <- read_qza("ordination-post-hepatic.qza")
+grd_ord <- read_qza("data/results/ordination-post-hepatic.qza")
 
 rpcaPoH<-grd_ord$data$Vectors %>%
   select(SampleID, PC1, PC2) %>%
@@ -245,7 +262,7 @@ poH<-rpcaPoH %>%
   labs(x =paste("PC1 (",round(grd_ord$data$ProportionExplained$PC1*100,digits=2),"%)",sep=""),
        y =paste("PC2 (",round(grd_ord$data$ProportionExplained$PC2*100,digits=2),"%)",sep=""),
        color="HE grade")+ggtitle("PostTIPS") + theme(plot.title = element_text(face = "bold"), legend.position = "left")
-ggsave("SFR22_1216_PCoAvisitPostOnlyHEgradeHep_wellipse.pdf", plot=poH,height=3, width=4.5)
+ggsave("data/figures/PCoAvisitPostOnlyHEgradeHep_wellipse.pdf", plot=poH,height=3, width=4.5)
 
 ##0
 rpca_0<-rpcaPoH%>%filter(WPostTIPS_HE=="0")%>%dplyr::select(2:3)
@@ -324,12 +341,12 @@ calculate_portal_gradient(ptFile="~/Dropbox/ucsd/projects/he/data/processed/pati
 
 
 # 2.C. within individual changes of metabolite dissimilarity in peripheral vein--------------
-mdP<-fread("metadata_table/metadata_table-peripheral-prepost.txt") %>%
+mdP<-fread("data/processed/metadata_table-peripheral-prepost.txt") %>%
   dplyr::select(sampleid,ATTRIBUTE_pt_id, ATTRIBUTE_blood_procedure,
                 ATTRIBUTE_PreTIPS_HE_mod,ATTRIBUTE_Worst_PostTIPS_HE_mod)%>%
   spread(ATTRIBUTE_blood_procedure,sampleid)
 
-perif_dist<-fread("beta_deicode_lcms_peripheral-prepost/distance-matrix.tsv")%>%
+perif_dist<-fread("data/results/beta_deicode_lcms_peripheral-prepost/distance-matrix.tsv")%>%
   gather(V2,distance,-V1) %>%dplyr::rename(pre=V1, post=V2) %>%
   right_join(.,mdH,by=c("pre","post")) %>%
   drop_na() %>%
@@ -342,7 +359,7 @@ pwP<-ggplot(perif_dist, aes(x=fct_reorder(ATTRIBUTE_pt_id,distance), y=distance,
   labs(x="subject ID",y="robust aitchison distance", title="Post TIPS grading", fill="HE grading")+
   theme(legend.position = "top",
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-ggsave("beta_deicode_lcms_peripheral-prepost/distancepost_bysubject.pdf", plot=pwP,height=3.5, width=5)
+ggsave("data/figures/peripheral_distancepost_bysubject.pdf", plot=pwP,height=3.5, width=5)
 
 #boxplot
 pwPs<-ggplot(hepatic_dist, aes(x=ATTRIBUTE_Worst_PostTIPS_HE_mod, y=distance,fill=ATTRIBUTE_Worst_PostTIPS_HE_mod)) +
@@ -352,7 +369,7 @@ pwPs<-ggplot(hepatic_dist, aes(x=ATTRIBUTE_Worst_PostTIPS_HE_mod, y=distance,fil
   scale_fill_manual(values=c("#39B54A", "#283891", "#EF3E36"))+
   labs(x="HE grade",y="robust aitchison distance", title="Post TIPS grading")+
   theme(legend.position = "none")
-ggsave("beta_deicode_lcms_peripheral-prepost/distancevs.postTIPS.pdf", plot=pwPs,height=3, width=3.5)
+ggsave("data/figures/peripheral_distancevs.postTIPS.pdf", plot=pwPs,height=3, width=3.5)
 
 pairwise.wilcox.test(perif_dist$distance, perif_dist$ATTRIBUTE_Worst_PostTIPS_HE_mod,
                      p.adjust.method="fdr")
@@ -362,12 +379,12 @@ pairwise.wilcox.test(perif_dist$distance, perif_dist$ATTRIBUTE_Worst_PostTIPS_HE
 #   2+ 0.87 0.87
 
 # 2.D. within individual changes of metabolite dissimilarity in hepatic vein--------------
-mdH<-fread("metadata_table/metadata_table-hepatic.txt") %>%
+mdH<-fread("data/processed/metadata_table-hepatic.txt") %>%
   dplyr::select(sampleid,ATTRIBUTE_pt_id, ATTRIBUTE_blood_procedure,
                 ATTRIBUTE_PreTIPS_HE_mod,ATTRIBUTE_Worst_PostTIPS_HE_mod)%>%
   spread(ATTRIBUTE_blood_procedure,sampleid)
 
-hepatic_dist<-fread("beta_deicode_lcms_hepatic/distance-matrix.tsv")%>%
+hepatic_dist<-fread("data/results/beta_deicode_lcms_hepatic/distance-matrix.tsv")%>%
   gather(V2,distance,-V1) %>%dplyr::rename(pre=V1, post=V2) %>%
   right_join(.,mdH,by=c("pre","post")) %>%
   drop_na() %>%
@@ -380,7 +397,7 @@ pwH<-ggplot(hepatic_dist, aes(x=fct_reorder(ATTRIBUTE_pt_id,distance), y=distanc
   labs(x="subject ID",y="robust aitchison distance", title="Post TIPS grading", fill="HE grading")+
   theme(legend.position = "top",
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-ggsave("beta_deicode_lcms_hepatic/distancepost_bysubject.pdf", plot=pwH,height=3.5, width=5)
+ggsave("data/figures/hepatic_distancepost_bysubject.pdf", plot=pwH,height=3.5, width=5)
 
 #boxplot
 pwHs<-ggplot(hepatic_dist, aes(x=ATTRIBUTE_Worst_PostTIPS_HE_mod, y=distance,fill=ATTRIBUTE_Worst_PostTIPS_HE_mod)) +
@@ -390,7 +407,7 @@ pwHs<-ggplot(hepatic_dist, aes(x=ATTRIBUTE_Worst_PostTIPS_HE_mod, y=distance,fil
   scale_fill_manual(values=c("#39B54A", "#283891", "#EF3E36"))+
   labs(x="HE grade",y="robust aitchison distance", title="Post TIPS grading")+
   theme(legend.position = "none")
-ggsave("beta_deicode_lcms_hepatic/distancevs.postTIPS.pdf", plot=pwHs,height=3, width=3.5)
+ggsave("data/figures/hepatic_distancevs.postTIPS.pdf", plot=pwHs,height=3, width=3.5)
 
 pairwise.wilcox.test(hepatic_dist$distance, hepatic_dist$ATTRIBUTE_Worst_PostTIPS_HE_mod,
                      p.adjust.method="fdr")
