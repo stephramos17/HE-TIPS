@@ -1,5 +1,7 @@
 # Functions ---------------------------------------
 
+# 1. General functions --------
+
 load_quant_tab_lcms <- function(inPath = fbmnDir) {
   
   # Input
@@ -43,9 +45,11 @@ load_metadata_lcms <- function(inPath = fbmnDir) {
   # Output
   #       - mdat is metadata available from FBMN related to each sample
   
-  # read metadata
+  # Read metadata
   mdatFile <- file.path(inPath, "metadata_table", "metadata_table-00000.tsv" )
   mdat <- read.delim(mdatFile)
+  
+  # Edit colnames and levels of factors according to desired plot order
   colnames(mdat) <- gsub("ATTRIBUTE_", "", colnames(mdat))
   mdat$Sample <- factor(mdat$Sample, levels=c("Pre-P", "Pre-HV", "Post-HV", "Post-P", "BD", 
                                               "Pre-HET", "Post-HET", 
@@ -67,6 +71,7 @@ get_long_qtab_w_mdat <- function(xqtab=qtab,
   # Output
   #       - mdat is metadata available from FBMN related to each sample
   
+  # Merge tables to add cluster index and annotation
   xqtab <- merge(xqtab, lookup, by.x="row.ID", by.y="cluster.index")
   lqtab <- pivot_longer(xqtab, cols=grep("Peak", colnames(xqtab), value = T),
                         names_to="peak_sample", values_to="peak_area")
@@ -118,7 +123,14 @@ load_clusterinfo_tab_lcms <- function(inPath=fbmnDir) {
 
 check_annotation_fbmn <- function(x, dat_db=mdb) {
   
+  # Input
+  #       x is metabolite id of interest
+  #       dat_db is gnps output that has compound information
+  # Output
+  #       return any matches for x (inlcudes compound name if it exists)
+
   
+  # Check annotation for given enry
   dat <- dat_db[dat_db$X.Scan. %in% x,] # [,c("X.Scan.","Compound_Name" )]
   
   
@@ -133,7 +145,11 @@ gg_color_hue <- function(n) {
 
 get_paired_dat_pt <- function(dat) {
   
-  # dat is long quantification table (lqtab) with metadata info
+  # Input
+  #       - dat is long quantification table (lqtab) with metadata info
+  #             it must contain at least 2 timepoints, like pre-PIV and post-PIV 
+  # Output
+  #       - pair_dat includes data for all patients that have paired data
   
   # Get all pts w/ pre & post samples
   pt_dat <- unique(dat[,c("pt_id", "blood_origin", "blood_procedure", "Sample")])
@@ -196,10 +212,10 @@ add_cluster_subclass_db <- function(dat=db, dat_c=cdat) {
 }
 
 get_cluster_info_4metabolite <- function(metab, dat) {
-  # metab -- id of metabolite of interest
-  # dat --  clustersummary data table with info regarding cluster.index, LibraryID, etc
-  # ex: gudca
-  # cluster index = 515 (metabolite id); component index = 2 (cluster id)
+  
+  # Input
+  #       metab -- id of metabolite of interest (example: GUDCA would be metab=515)
+  #       dat --  clustersummary data table with info regarding cluster.index, LibraryID, etc
   
   shared_idx <- subset(dat, cluster.index == metab, select = componentindex)[[1]]
   print(shared_idx)
@@ -266,6 +282,340 @@ combine_matched_ids <- function(hits_subclass) {
   hits_subclass$classification <- as.factor(hits_subclass$classification)
   return(hits_subclass)
 }
+
+
+
+# Functions for baseline analysis (figure 3) -------------------
+
+get_change_from_baseline <- function(dat) {
+  
+  # input: long quantification table with filtered paired data
+  # output: same table with pre to post change - post data rows only
+  
+  data_chg <- subset(dat,  blood_procedure %in% c("pre", "post")) %>%
+    arrange(row.ID, pt_id, Sample) %>%
+    group_by(row.ID, pt_id) %>%
+    mutate(change_from_baseline = peak_mod - peak_mod[1L]) %>% # change from baseline
+    mutate("d.peak" = peak_mod/peak_mod[1L]) %>% # [1L] -> baseline
+    mutate("log10_dpeak" = log10(d.peak)) %>%
+    ungroup()
+  
+  post_change <- subset(data_chg, blood_procedure == "post")
+  return(post_change)
+}
+
+make_dens_plot <- function(dat){
+  
+  ggplot(dat, aes(x=log10_dpeak, group=Worst_PostTIPS_HE_mod,
+                  fill=Worst_PostTIPS_HE_mod, color=Worst_PostTIPS_HE_mod))+
+    theme_pubr()+
+    geom_density(adjust=1.5, alpha=.3) +
+    scale_color_manual(values=he_colors) + 
+    scale_fill_manual(values=he_colors) -> dens_dpeak
+  return(dens_dpeak)
+}
+
+
+
+make_violinplot_byGrade <- function(dat) {
+  # input:
+  #     - dat: filtered change pre/post data (with log10_dpeak)  
+  #             examples input data: per_change; hep_change; all_change
+  #             filtering: subset data by componentindex to be plotted
+  
+  ggplot(dat, aes(y=log10_dpeak, 
+                  x=Worst_PostTIPS_HE_mod, 
+                  fill=Worst_PostTIPS_HE_mod)) +
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank())+
+    theme_bw() +
+    geom_point( position = position_jitterdodge(), alpha=0.3) +
+    geom_violin(alpha=0.7) +
+    xlab("HE grade")+
+    scale_fill_manual(values=c("#39B54A", "#283891", "#EF3E36"))+
+    stat_compare_means(method = "wilcox", 
+                       comparisons = list(c("0", "1"), c("0", "2+"), c("1", "2+"))) +
+    # theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+    ylab("Change pre/post")+
+    facet_wrap(~componentindex, nrow=1) -> panel_clusters
+  
+  return(panel_clusters)
+  
+}
+
+get_sorted_mb_4plot <- function(dat, grade) {
+  # input:
+  #     - dat is df with baseline change[per_change or hep_change (previous post_change)]
+  #     - grade is reference group to order by
+  # output is plot
+  
+  # Order all metabolites by change
+  dat  %>%
+    group_by(row.ID, Worst_PostTIPS_HE_mod, componentindex) %>%
+    summarise(mean_change = mean(log10_dpeak) ) %>%
+    arrange(mean_change) %>% 
+    as.data.frame() %>%
+    mutate(new_order = (1:nrow(.))) -> mc
+  
+  
+  # Create new dataframe with mean rowID by group
+  sm_cfb <- dat  %>%
+    group_by(row.ID, Worst_PostTIPS_HE_mod, componentindex, blood_origin) %>%
+    summarise(mean_change = mean(log10_dpeak))
+  
+  
+  # Get data for group to order by
+  s0 <- subset(sm_cfb, Worst_PostTIPS_HE_mod %in% grade )
+  
+  # Order all by rowID of group "i"
+  row_id_0_order <-  s0[order(s0$mean_change),]$row.ID
+  sm_cfb$row.ID <- as.factor(as.character(sm_cfb$row.ID))
+  sm_cfb$row.ID <- factor(sm_cfb$row.ID, levels=row_id_0_order)
+  return(sm_cfb)
+}
+
+get_significance_clusters <- function(dat) {
+  
+  # input: change in baseline dataframe
+  # output: significant clusters
+  subset(dat, componentindex != -1) %>% 
+    compare_means(formula = log10_dpeak ~ Worst_PostTIPS_HE_mod , 
+                  method = "kruskal", group.by = "componentindex") -> clusters
+  # subset(p < 0.05, select=c(componentindex, p, method, `p.adj`)) -> sig_clusters
+  
+  #return(sig_clusters)
+  return(clusters)
+}
+
+run_ks_for_groups <- function(dat) {
+  
+  c01 <- ks.test(subset(dat,  Worst_PostTIPS_HE_mod == "0", select=log10_dpeak)[[1]],
+                 subset(dat,  Worst_PostTIPS_HE_mod == "1", select=log10_dpeak)[[1]])
+  c02 <- ks.test(subset(dat,  Worst_PostTIPS_HE_mod == "0", select=log10_dpeak)[[1]],
+                 subset(dat,  Worst_PostTIPS_HE_mod == "2+", select=log10_dpeak)[[1]])
+  c12 <- ks.test(subset(dat,  Worst_PostTIPS_HE_mod == "1", select=log10_dpeak)[[1]],
+                 subset(dat,  Worst_PostTIPS_HE_mod == "2+", select=log10_dpeak)[[1]])
+  
+  res <- list(`0 vs 1`=c01, `0 vs 2`= c02,`1 vs 2`= c12)
+  return(res)
+  
+}
+
+# Functions for bile acid analysis (figure 4) --------------------
+
+rename_sample_abbreviations <- function(df=lqtab) {
+  
+  # Rename original sample names from readmission
+  # to reconcile similar timepoint between individuals
+  
+  df$Sample <- recode(df$Sample, `Pre-P` = "Pre-PIV",
+                      `Post-P` = "Post-PIV",
+                      `Post-TIPS Revision` = "Post-HET",
+                      `POD-1. TIPS Revision` = "Post-HET2" )
+  
+  df <- droplevels(df)
+  return(df)
+  
+}
+
+run_stat_mbt_abundance <- function(dat, test="wilcox") {
+  
+  res <- compare_means(formula=log10 ~ Worst_PostTIPS_HE_mod, 
+                       data = dat, group.by="row.ID", method = test,
+                       p.adjust.method = "fdr")
+  return(res)
+  
+} 
+
+plot_bileacids_violin <- function(dat) {
+  
+  # dat: dataframe w/ log data and HE grade
+  dat %>%
+    ggplot(aes(y=log10, x=Worst_PostTIPS_HE_mod)) +
+    theme_bw() +
+    geom_violin() +
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1) +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+    ylab("log10(abundance)")+
+    xlab("HE grade")
+  
+}
+
+
+# Function for chemdir analysis (figure 5) ---------------
+
+read_chemdir_files <- function(fnames) {
+  
+  # x is list of files to be read
+  purrr::map_df(fnames, function(x) {
+    data <- read.delim(x)
+    id <- gsub(pattern = ".*CHEMDIR-(.*)-download_data.*", replacement = "\\1", x=x) 
+    cbind(file_id = id, data)
+  }) -> combined_file
+  
+  return(combined_file)
+  
+}
+
+add_new_chemdir_cols <- function(x) {
+  
+  # x is chemdir data output
+  dat <- x
+  dat$clusters <- as.factor(paste(dat$CLUSTERID1, dat$CLUSTERID2, sep = "_"))
+  dat$abs_dmz <- abs(dat$DeltaMZ)
+  dat$chemdir_w_sign <- dat$max_chemdir * dat$sign_chemdir
+  return(dat)
+}
+
+load_selfloop_table <- function(mydir) {
+  
+  selfloop_file <- list.files(fbmnDir, pattern="selfloop", 
+                              recursive = TRUE, full.names=TRUE)
+  print(selfloop_file)
+  selfloop_df <- read.delim(selfloop_file, sep="\t", header = TRUE, na.strings = c("", " ", "NA")) 
+  
+  return(selfloop_df)
+} 
+
+read_chemdirjob_mdat <- function(f=file_mdat) {
+  
+  # Get file metadata info
+  fdat <- read.csv(f)[,c("task_id","tool", "group", "timeseries", "HE_status",
+                         "condition", "grading_value", "grading_timepoint")]
+  fdat$file_id <- as.factor(gsub("^(.{8}).*", "\\1", fdat$task_id))
+  print(head(fdat))
+  fdat$group <- factor(fdat$group, levels=c("per", "hep"))
+  fdat$grading_value <- factor(fdat$grading_value, levels=c("0", "1", "2+"))
+  fdat$grading_timepoint <- factor(fdat$grading_timepoint, levels=c("wpreTIPS", "wpostTIPS"))
+  print(head(fdat))
+  
+  return(fdat)
+}
+
+
+plot_geompoint_dmz <- function(dat) {
+  
+  dat %>%
+    ggplot(aes(x=DeltaMZ , y=max_chemdir))+
+    theme_pubr() +
+    scale_y_continuous(name = "ChemProp Score") + 
+    theme(legend.position = "right") +
+    ylab("Score") + xlab("Delta m/z") +
+    geom_hline(yintercept = 0.5, linetype="dashed", color = "black")+
+    geom_point(alpha=0.4, color="grey") +
+    facet_wrap(~condition)-> p
+  return(p)
+}
+
+dmz_edges_colored_plots <- function(dat) {
+  # Generate delta m/z plots by subclass
+  # or based on cutoff
+  
+  # Select hits above threshold
+  df05 <- subset(dat, max_chemdir > 0.5)
+  
+  # Find annotations to use
+  lapply(unique(df05$ComponentIndex), function(i) {
+    
+    selection <- subset(mdb, componentindex == i, 
+                        select = c(Compound_Name, componentindex, subclass)) 
+    if(nrow(selection) >=1) {
+      return(i)
+    }
+    
+  }) %>% unlist -> anno_chemdir
+  
+  
+  lapply(unique(df05$ComponentIndex), function(i) {
+    
+    selection <- subset(mdb, componentindex == i, 
+                        select = c(Compound_Name, componentindex, subclass)) 
+    if(nrow(selection) >=1) {
+      # print(paste0("Found ", i, " in DB" ))
+      # print(unique(selection$subclass))
+      return(selection$subclass)
+    }
+    
+  })
+  
+  
+  subset(df05, !grepl("adduct", df05$EdgeAnnotation) & 
+           abs(max_chemdir) > 1, 
+         select= c(EdgeAnnotation, DeltaMZ, abs_dmz, sign_chemdir, max_chemdir )) %>% 
+    na.omit %>%
+    unique %>%
+    arrange(abs_dmz) -> anno_2add
+  
+  print(anno_2add) 
+  
+  # Make plots
+  dat %>%
+    plot_geompoint_dmz() +
+    geom_text(
+      data = ~ unique(subset(df05, select=c(EdgeAnnotation, DeltaMZ))),
+      aes(label = EdgeAnnotation, x = DeltaMZ, y = 1),
+      size = 2, angle=90)
+  
+  # geom_point(data= ~ subset(.x, ComponentIndex %in% anno_chemdir),
+  #            aes(color=as.character(ComponentIndex))) + 
+  # guides(color=guide_legend(title="Subclass cluster"))
+}
+
+make_barplot_edgeannotations <- function(dat ,cutoff = 0.5) {
+  
+  subset(dat, max_chemdir > cutoff & 
+           !grepl("adduct", dat$EdgeAnnotation)) %>%
+    drop_na(EdgeAnnotation) %>%
+    ggplot(aes(EdgeAnnotation, fill=group))+
+    geom_bar(stat="count", alpha=0.7, position="dodge" ) + 
+    coord_flip()+
+    theme(axis.text.x = element_text(angle = 90)) +
+    ggtitle(paste0("pre vs post >", cutoff, " score")) +
+    ylab("Count") +
+    scale_fill_manual(values=c("#2E3192", "#EE207C")) + # green: #39B54A"
+    facet_wrap(~group)   -> p
+  return(p)
+}
+
+
+get_diff_chemdir <- function(dat) {
+  # For chemdir > 1, select clusters and
+  # get the ones that have the greatest differences when comparing two groups
+  # input dat is chemdir df w/ 2 groups
+  
+  hclusters <- unique(dat[dat$chemdir > 1,]$clusters)
+  datf <- dat[dat$clusters %in% hclusters,]
+  deltachemdir <- datf[,c("condition", "clusters", "max_chemdir")]
+  deltachemdir <- reshape(deltachemdir, idvar ="clusters", timevar="condition", direction="wide")
+  deltachemdir$logd <- abs(log(deltachemdir[,2]/deltachemdir[,3]))
+  selected <- deltachemdir[deltachemdir$logd > 1,]$clusters
+  fdat <- subset(dat, clusters %in% selected & abs_dmz > 1)
+  return(fdat)
+  
+}
+
+chemdir_diff_bygrade_barplot <- function(dat) {
+  
+  dat %>%
+    get_diff_chemdir() %>%
+    ggplot(aes(x=paste0(ComponentIndex, "_", clusters, " (DeltaMZ: ", DeltaMZ , ")"),
+               y=max_chemdir, fill=condition)) +
+    xlab("Neighboring nodes")+
+    theme_bw()+
+    scale_fill_manual(values = c("#39B54A", "#283891", "#EF3E36"))+
+    scale_color_manual(values = c("#39B54A", "#283891", "#EF3E36"))+
+    geom_bar(stat='identity', alpha=0.8) +
+    coord_flip() -> p
+  
+  return(p)
+  
+  
+}
+
+
+
+
+# Functions for Figures 1-2 -------------
 
 paired_wilcox<-function(df,compr){
   pr_mtbids.mlms = lapply(df[, unique(rowID)], function (oid) {
