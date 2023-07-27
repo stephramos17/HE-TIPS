@@ -330,14 +330,14 @@ calculate_portal_gradient <- function(ptFile, pgFile) {
     scale_fill_manual(values=he_colors)+
     stat_compare_means(method = "kruskal", label = "p.format",
                        label.x.npc = 0.3, label.y.npc = 0.9)
-  ggsave("gradient_change.pdf", width=4, height=7)
-  ggsave("gradient_change.png", width=4, height=7)
+  ggsave("./figures/gradient_change.pdf", width=4, height=7)
+  ggsave("./figures/gradient_change.png", width=4, height=7)
   
   
 }
 
-calculate_portal_gradient(ptFile="~/Dropbox/ucsd/projects/he/data/processed/patient_overview_updated_20220613.xlsx",
-                          pgFile="~/Dropbox/ucsd/projects/he/data/processed/TIPS_pressure_data_20230310.csv")
+calculate_portal_gradient(ptFile="./data/processed/patient_overview_short.xlsx",
+                          pgFile="./data/processed/TIPS_pressure_data_20230310.csv")
 
 
 # 2.C. within individual changes of metabolite dissimilarity in peripheral vein--------------
