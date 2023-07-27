@@ -1,7 +1,7 @@
 # main_Fig3-5.R
 # Author: Carolina Dantas
 # Date: Mar 9 2023
-# Purpose: code to perform analysis and generate Figures 3-5
+# Purpose: code to perform analysis of metabolomics data and generate Figures 3-5
 
 # Libraries
 library(tidyverse)
@@ -10,14 +10,14 @@ library(viridis)
 library(rstatix)
 
 # Set directories and analysis paths
-setwd("~/Dropbox/ucsd/projects/he/analysis/HE-TIPS/")
-fbmnDir <- "./data/chemdir_v28_suspect_20220429/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/"
+#setwd("~/Dropbox/ucsd/projects/he/analysis/HE-TIPS/")
+fbmnDir <- "./data/gnps_output/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/"
 analysis_name <-"20230309_"
 source("./code/function_lcms.R")
 
 # Set dir and paths
-inDir <- "./data/chemdir_v28_suspect_20220429/" 
-file_mdat <- "./data/chemdir_v28_suspect_20220429/filtered_results_20220430.csv"
+inDir <- "./data/gnps_output" 
+file_mdat <- file.path(inDir, "filtered_results_20220430.csv" )
 chemdir_files <- list.files(inDir, pattern="CHEMDIR.*tsv", recursive=TRUE, full.names = T)
 fig_pre <- paste0("./figures/", analysis_name)
 res_pre <- paste0("./results/", analysis_name)
@@ -192,7 +192,8 @@ write.csv(all_change, file = paste0(res_pre, "fig3-table.csv"), quote=F, row.nam
 # Plot Change from baseline results
 
 # 3.B. Density plot for change from baseline ------------
-
+dir.create("./figures")
+dir.create("./results")
 
 # Peripheral only ---------
 
@@ -812,4 +813,4 @@ subset(grad, group %in% c("hep") & clusters %in% "527_733")
 #           Response to reviewers
 # ---------------------------------------------#
 
-source("~/Dropbox/ucsd/projects/he/analysis/HE-TIPS/code/rtr_figures.R")
+source("./code/rtr_figures.R")
