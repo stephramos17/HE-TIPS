@@ -413,9 +413,6 @@ subset(grad, group %in% c("hep")) %>%
 ggsave(paste0(fig_pre,  "main_chemprop_barplot_HEgrade_hep.pdf"), width = 3.5, height = 4)
 ggsave(paste0(fig_pre,  "main_chemprop_barplot_HEgrade_hep.png"), width = 3.5, height = 4)
 
-# Find out what main clusters are
-# subset(mdb, componentindex %in% 19, select=c(componentindex, subclass, `X.Scan.`,  Compound_Name))
-
 prepost_for_pair <- function(dat, usemedian = T){
   
   if(usemedian == TRUE) {
