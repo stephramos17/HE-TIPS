@@ -190,5 +190,5 @@ calculate_portal_gradient <- function(ptFile, pgFile) {
   
 }
 
-calculate_portal_gradient(ptFile="./data/processed/patient_overview_updated_20220613.xlsx",
+calculate_portal_gradient(ptFile="./data/processed/patient_overview_short.xlsx",
                           pgFile="./data/processed/TIPS_pressure_data_20230310.csv")
