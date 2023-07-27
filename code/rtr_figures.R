@@ -152,7 +152,7 @@ subset(lqtab, row.ID  %in% bas & Sample == "Post-PIV" ) %>%
   plot_bileacids_violin() +
   facet_wrap(~row.ID) +
   stat_compare_means(method = "wilcox.test")
-ggsave("./RTR_bileacids_01_2.pdf", width = 15, height = 6, units = "cm", dpi = 300)
+ggsave(paste0(fig_pre, "RTR_bileacids_01_2.pdf"), width = 15, height = 6, units = "cm", dpi = 300)
 
 # ------------------------------------------------------------ #
 #                   Pressure
