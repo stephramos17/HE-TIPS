@@ -67,16 +67,13 @@ write.table(mdPP,"data/processed/metadata_table-peripheral-prepost.txt",sep = "\
 
 HEdf_PerifPP<-fread("data/gnps_output/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/quantification_table/quantification_table-00000.csv")%>%
   select(`row ID`, all_of(mdPP$sampleid))
-write.table(HEdf_PerifPP,"data/quantification_table/quantification_table-peripheral-prepost.txt",sep = "\t",row.names = FALSE,quote=FALSE)
+write.table(HEdf_PerifPP,"data/processed/quantification_table-peripheral-prepost.txt",sep = "\t",row.names = FALSE,quote=FALSE)
 
 #cleaning mtb file -------------------
 mtbid_dict<-fread("data/gnps_output/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/DB_result/32405003deff48dfb9e7cb571ecefc23.tsv")%>%
   rename(rowID=`#Scan#`)
 
 md<-fread("data/gnps_output/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/metadata_table/metadata_table-00000.tsv")%>%rename(sample_name=filename)
-md$ATTRIBUTE_blood_procedure[md$ATTRIBUTE_Sample=="Pre-HET"]<-"pre"
-md$ATTRIBUTE_blood_procedure[grepl("Post-",md$ATTRIBUTE_Sample)]<-"post"
-md$ATTRIBUTE_blood_procedure[grepl("POD-1",md$ATTRIBUTE_Sample)]<-"post"
 md$ATTRIBUTE_blood_procedure<-factor(md$ATTRIBUTE_blood_procedure,c("pre","post","bd","return"))
 
 mtb_all<-fread("data/gnps_output/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-8068b7cb-view_all_clusters_withID/quantification_table/quantification_table-00000.csv")%>%
@@ -251,12 +248,12 @@ grd_ord <- read_qza("data/results/ordination-post-hepatic.qza")
 rpcaPoH<-grd_ord$data$Vectors %>%
   select(SampleID, PC1, PC2) %>%
   dplyr::rename(sampleid=SampleID)%>%
-  left_join(md,by="sampleid")
+  left_join(mdH,by="sampleid")
 
 poH<-rpcaPoH %>%
-  ggplot(aes(x=PC1, y=PC2, color=WPostTIPS_HE,shape=ATTRIBUTE_blood_origin)) +
+  ggplot(aes(x=PC1, y=PC2, color=ATTRIBUTE_Worst_PostTIPS_HE_mod,shape=ATTRIBUTE_blood_origin)) +
   geom_point(alpha=1.0) + #alpha controls transparency and helps when points are overlapping
-  theme_pubr() +stat_ellipse(type = "t", linetype = 2,aes(group = WPostTIPS_HE))+
+  theme_pubr() +stat_ellipse(type = "t", linetype = 2,aes(group = ATTRIBUTE_Worst_PostTIPS_HE_mod))+
   scale_shape_manual(values=c(15,16,17),name="Blood Origin") +
   scale_color_manual(values=c("#39B54A", "#283891", "#EF3E36"))+
   labs(x =paste("PC1 (",round(grd_ord$data$ProportionExplained$PC1*100,digits=2),"%)",sep=""),
@@ -265,21 +262,21 @@ poH<-rpcaPoH %>%
 ggsave("data/figures/PCoAvisitPostOnlyHEgradeHep_wellipse.pdf", plot=poH,height=3, width=4.5)
 
 ##0
-rpca_0<-rpcaPoH%>%filter(WPostTIPS_HE=="0")%>%dplyr::select(2:3)
+rpca_0<-rpcaPoH%>%filter(ATTRIBUTE_Worst_PostTIPS_HE_mod=="0")%>%dplyr::select(2:3)
 eig_dat <- eigen(cov(rpca_0))$values 
 vec <- sqrt(5.991* eig_dat)
 pi * vec[1] * vec[2] 
 #A=0.0577387
 
 ##1
-rpca_1<-rpcaPoH%>%filter(WPostTIPS_HE=="1")%>%dplyr::select(2:3)
+rpca_1<-rpcaPoH%>%filter(ATTRIBUTE_Worst_PostTIPS_HE_mod=="1")%>%dplyr::select(2:3)
 eig_dat <- eigen(cov(rpca_1))$values 
 vec <- sqrt(5.991* eig_dat)
 pi * vec[1] * vec[2] 
 #A=1.128352
 
 ##2+
-rpca_2p<-rpcaPoH%>%filter(WPostTIPS_HE=="2+")%>%dplyr::select(2:3)
+rpca_2p<-rpcaPoH%>%filter(ATTRIBUTE_Worst_PostTIPS_HE_mod=="2+")%>%dplyr::select(2:3)
 eig_dat <- eigen(cov(rpca_2p))$values 
 vec <- sqrt(5.991* eig_dat)
 pi * vec[1] * vec[2] 
@@ -348,7 +345,7 @@ mdP<-fread("data/processed/metadata_table-peripheral-prepost.txt") %>%
 
 perif_dist<-fread("data/results/beta_deicode_lcms_peripheral-prepost/distance-matrix.tsv")%>%
   gather(V2,distance,-V1) %>%dplyr::rename(pre=V1, post=V2) %>%
-  right_join(.,mdH,by=c("pre","post")) %>%
+  right_join(.,mdP,by=c("pre","post")) %>%
   drop_na() %>%
   mutate(ATTRIBUTE_PreTIPS_HE_mod=as.factor(ATTRIBUTE_PreTIPS_HE_mod),
          ATTRIBUTE_Worst_PostTIPS_HE_mod=as.factor(ATTRIBUTE_Worst_PostTIPS_HE_mod))
@@ -362,7 +359,7 @@ pwP<-ggplot(perif_dist, aes(x=fct_reorder(ATTRIBUTE_pt_id,distance), y=distance,
 ggsave("data/figures/peripheral_distancepost_bysubject.pdf", plot=pwP,height=3.5, width=5)
 
 #boxplot
-pwPs<-ggplot(hepatic_dist, aes(x=ATTRIBUTE_Worst_PostTIPS_HE_mod, y=distance,fill=ATTRIBUTE_Worst_PostTIPS_HE_mod)) +
+pwPs<-ggplot(perif_dist, aes(x=ATTRIBUTE_Worst_PostTIPS_HE_mod, y=distance,fill=ATTRIBUTE_Worst_PostTIPS_HE_mod)) +
   geom_boxplot(alpha=0.3) + geom_dotplot(binaxis='y', stackdir='center',
                                          position=position_dodge(1)) +
   theme_minimal()+ scale_color_manual(values=c("#39B54A", "#283891", "#EF3E36"))+
